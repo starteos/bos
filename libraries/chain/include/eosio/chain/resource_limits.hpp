@@ -60,7 +60,13 @@ namespace eosio { namespace chain { namespace resource_limits {
          void initialize_account( const account_name& account );
          void set_block_parameters( const elastic_limit_parameters& cpu_limit_parameters, const elastic_limit_parameters& net_limit_parameters );
 
-         void set_block_parameters_ex( const gmr_parameters&  res_parameters ); // *bos*
+        
+        /**
+         * @brief Set the guaranteed minimum resources parameters object 
+         * 
+         * @param res_parameters     guaranteed minimum resources parameters object include ram net cpu 
+         */
+         void set_gmr_parameters( const gmr_parameters&  res_parameters ); // *bos* //guaranteed minimum resources  which is abbreviated  gmr
 
          void update_account_usage( const flat_set<account_name>& accounts, uint32_t ordinal );
          void add_transaction_usage( const flat_set<account_name>& accounts, uint64_t cpu_usage, uint64_t net_usage, uint32_t ordinal );

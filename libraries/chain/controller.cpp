@@ -33,7 +33,7 @@ using controller_index_set = index_set<
    account_index,
    account_sequence_index,
    global_property_multi_index,
-   global_propertyex_multi_index,
+   global_property2_multi_index,
    dynamic_global_property_multi_index,
    block_summary_multi_index,
    transaction_multi_index,
@@ -108,6 +108,8 @@ struct pending_state {
    controller::block_status           _block_status = controller::block_status::incomplete;
 
    optional<block_id_type>            _producer_block_id;
+
+    std::function<signature_type(digest_type)> _signer;
 
    void push() {
       _db_session.push();
@@ -640,11 +642,11 @@ struct controller_impl {
       db.create<dynamic_global_property_object>([](auto&){});
 
       // *bos begin*
-
-       db.create<global_propertyex_object>([&](auto &gpo) {
-         gpo.gmr.cpu_us = config::default_free_cpu_limit;
-         gpo.gmr.net_byte = config::default_free_net_limit;
-         gpo.gmr.ram_byte = config::default_free_ram_limit;
+      //guaranteed minimum resources  which is abbreviated  gmr
+       db.create<global_property2_object>([&](auto &gpo) {
+         gpo.gmr.cpu_us = config::default_gmr_cpu_limit;
+         gpo.gmr.net_byte = config::default_gmr_net_limit;
+         gpo.gmr.ram_byte = config::default_gmr_ram_limit;
       });
 
       sync_name_list(list_type::actor_blacklist_type,true);
@@ -708,7 +710,7 @@ struct controller_impl {
       sync_name_list(list);
    }
 
-   void sync_list_and_db(list_type list, global_propertyex_object &gprops2,bool isMerge=false)
+   void sync_list_and_db(list_type list, global_property2_object &gprops2,bool isMerge=false)
    {
       int64_t lst = static_cast<int64_t>(list);
       EOS_ASSERT( list >= list_type::actor_blacklist_type && list < list_type::list_type_count, transaction_exception, "unknown list type : ${l}, ismerge: ${n}", ("l", static_cast<int64_t>(list))("n", isMerge));
@@ -737,7 +739,7 @@ struct controller_impl {
 
    void sync_name_list(list_type list,bool isMerge=false)
    {
-      const auto &gpo2 = db.get<global_propertyex_object>();
+      const auto &gpo2 = db.get<global_property2_object>();
       db.modify(gpo2, [&](auto &gprops2) {
          sync_list_and_db(list, gprops2,isMerge);
       });
@@ -1155,7 +1157,7 @@ struct controller_impl {
 
 
    void start_block( block_timestamp_type when, uint16_t confirm_block_count, controller::block_status s,
-                     const optional<block_id_type>& producer_block_id )
+                     const optional<block_id_type>& producer_block_id , std::function<signature_type(digest_type)> signer = nullptr)
    {
       EOS_ASSERT( !pending, block_validate_exception, "pending block already exists" );
 
@@ -1174,6 +1176,7 @@ struct controller_impl {
 
       pending->_block_status = s;
       pending->_producer_block_id = producer_block_id;
+      pending->_signer = signer;
       pending->_pending_block_state = std::make_shared<block_state>( *head, when ); // promotes pending schedule (if any) to active
       pending->_pending_block_state->in_current_chain = true;
 
@@ -1241,9 +1244,12 @@ struct controller_impl {
 
    void apply_block( const signed_block_ptr& b, controller::block_status s ) { try {
       try {
-         EOS_ASSERT( b->block_extensions.size() == 0, block_validate_exception, "no supported extensions" );
+         //EOS_ASSERT( b->block_extensions.size() == 0, block_validate_exception, "no supported extensions" );
          auto producer_block_id = b->id();
          start_block( b->timestamp, b->confirmed, s , producer_block_id);
+
+         pending->_pending_block_state->block->header_extensions = b->header_extensions;
+         pending->_pending_block_state->block->block_extensions = b->block_extensions;
 
          transaction_trace_ptr trace;
 
@@ -1309,7 +1315,6 @@ struct controller_impl {
 
    void push_block( const signed_block_ptr& b, controller::block_status s ) {
       EOS_ASSERT(!pending, block_validate_exception, "it is not valid to push a block when there is a pending block");
-
       auto reset_prod_light_validation = fc::make_scoped_exit([old_value=trusted_producer_light_validation, this]() {
          trusted_producer_light_validation = old_value;
       });
@@ -1442,6 +1447,17 @@ struct controller_impl {
       pending->_pending_block_state->header.transaction_mroot = merkle( move(trx_digests) );
    }
 
+    void set_ext_merkle() {
+        vector<digest_type> ext_digests;
+        const auto& exts = pending->_pending_block_state->block->block_extensions;
+        ext_digests.reserve( exts.size());
+        for( const auto& a : exts )
+           ext_digests.emplace_back( digest_type::hash(a) );
+
+        auto mroot = merkle( move(ext_digests));
+        pending->_pending_block_state->header.set_block_extensions_mroot(mroot);
+    }
+
 
    void finalize_block()
    {
@@ -1466,7 +1482,7 @@ struct controller_impl {
       // Update resource limits:
       resource_limits.process_account_limit_updates();
       const auto& chain_config = self.get_global_properties().configuration;
-      const auto& gmr = self.get_global_properties2().gmr;
+      const auto& gmr = self.get_global_properties2().gmr;//guaranteed minimum resources  which is abbreviated  gmr
 
       uint32_t max_virtual_mult = 1000;
       uint64_t CPU_TARGET = EOS_PERCENT(chain_config.max_block_cpu_usage, chain_config.target_block_cpu_usage_pct);
@@ -1475,7 +1491,7 @@ struct controller_impl {
          {EOS_PERCENT(chain_config.max_block_net_usage, chain_config.target_block_net_usage_pct), chain_config.max_block_net_usage, config::block_size_average_window_ms / config::block_interval_ms, max_virtual_mult, {99, 100}, {1000, 999}}
       );
 
-    resource_limits.set_block_parameters_ex(
+    resource_limits.set_gmr_parameters(
          {  gmr.ram_byte, gmr.cpu_us,gmr.net_byte}
       );
 
@@ -1483,6 +1499,7 @@ struct controller_impl {
 
       set_action_merkle();
       set_trx_merkle();
+      set_ext_merkle();
 
       auto p = pending->_pending_block_state;
       p->id = p->header.id();
@@ -1693,9 +1710,9 @@ chainbase::database& controller::mutable_db()const { return my->db; }
 const fork_database& controller::fork_db()const { return my->fork_db; }
 
 
-void controller::start_block( block_timestamp_type when, uint16_t confirm_block_count) {
+void controller::start_block( block_timestamp_type when, uint16_t confirm_block_count, std::function<signature_type(digest_type)> signer) {
    validate_db_available_size();
-   my->start_block(when, confirm_block_count, block_status::incomplete, optional<block_id_type>() );
+   my->start_block(when, confirm_block_count, block_status::incomplete, optional<block_id_type>() , signer);
 }
 
 void controller::finalize_block() {
@@ -1839,6 +1856,11 @@ time_point controller::pending_block_time()const {
 optional<block_id_type> controller::pending_producer_block_id()const {
    EOS_ASSERT( my->pending, block_validate_exception, "no pending block" );
    return my->pending->_producer_block_id;
+}
+
+std::function<signature_type(digest_type)> controller::pending_producer_signer()const {
+  EOS_ASSERT( my->pending, block_validate_exception, "no pending block" );
+  return my->pending->_signer;
 }
 
 uint32_t controller::last_irreversible_block_num() const {
@@ -2213,8 +2235,8 @@ const flat_set<account_name> &controller::get_resource_greylist() const {
 }
 
 // *bos begin*
-const global_propertyex_object& controller::get_global_properties2()const {
-   return my->db.get<global_propertyex_object>();
+const global_property2_object& controller::get_global_properties2()const {
+   return my->db.get<global_property2_object>();
 }
 
 void controller::set_name_list(int64_t list, int64_t action, std::vector<account_name> name_list)

@@ -208,7 +208,7 @@ namespace eosio { namespace chain { namespace resource_limits {
       id_type id;
 
      
-      gmr_parameters res_parameters = { config::default_free_ram_limit,config::default_free_cpu_limit, config::default_free_net_limit};
+      gmr_parameters res_parameters = { config::default_gmr_ram_limit,config::default_gmr_cpu_limit, config::default_gmr_net_limit};
  
    };
 

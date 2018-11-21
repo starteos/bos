@@ -211,12 +211,13 @@ class privileged_api : public context_aware_api {
        
       }
 
-      void set_guaranteed_minmum_resources(int64_t ram_byte, int64_t cpu_us, int64_t net_byte)
+      void set_guaranteed_minimum_resources(int64_t ram_byte, int64_t cpu_us, int64_t net_byte)
       {
          EOS_ASSERT(ram_byte >= 0 && ram_byte <= 100 * 1024, wasm_execution_error, "resouces minimum guarantee for ram limit expected [0, 102400]");
          EOS_ASSERT(cpu_us >= 0 && cpu_us <= 100 * 1000, wasm_execution_error, "resouces minimum guarantee for cpu limit expected [0, 100000]");
          EOS_ASSERT(net_byte >= 0 && net_byte <= 100 * 1024, wasm_execution_error, "resouces minimum guarantee for net limit expected [0, 102400]");
 
+        //guaranteed minimum resources  which is abbreviated  gmr
          context.db.modify(context.control.get_global_properties2(),
                            [&](auto &gprops2) {
                               gprops2.gmr.ram_byte = ram_byte;
@@ -1397,6 +1398,14 @@ class context_free_transaction_api : public context_aware_api {
          return context.get_packed_transaction().size();
       }
 
+       void get_transaction_id( fc::sha256& id ) {
+          id = context.trx_context.id;
+       }
+
+       void get_action_sequence(uint64_t& seq){
+           seq = context.global_action_sequence;
+      }
+
       int expiration() {
         return context.trx_context.trx.expiration.sec_since_epoch();
       }
@@ -1679,6 +1688,81 @@ class call_depth_api : public context_aware_api {
       }
 };
 
+
+class action_seed_api  : public context_aware_api {
+public:
+    action_seed_api(apply_context& ctx)
+           : context_aware_api(ctx) {}
+
+   int bpsig_action_time_seed(array_ptr<char> sig, size_t siglen) {
+      auto data = action_timestamp();
+      fc::sha256::encoder encoder;
+      encoder.write(reinterpret_cast<const char*>(data.data()), data.size()* sizeof(uint32_t));
+      auto digest = encoder.result();
+      optional<fc::crypto::signature> signature;
+      auto block_state = context.control.pending_block_state();
+      for (auto& extension: block_state->block->block_extensions) {
+         if (extension.first != static_cast<uint16_t>(block_extension_type::bpsig_action_time_seed)) continue;
+         EOS_ASSERT(extension.second.size() > 8, transaction_exception, "invalid producer signature in block extensions");
+         uint64_t* act_parts = reinterpret_cast<uint64_t*>(extension.second.data());
+         if ( act_parts[0] != context.global_action_sequence) continue;
+
+         auto sig_data = extension.second.data() + 8;
+         auto sig_size = extension.second.size() - 8;
+         signature.emplace();
+         datastream<const char*> ds(sig_data, sig_size);
+         fc::raw::unpack(ds, *signature);
+         auto check = fc::crypto::public_key(*signature, digest, false);
+         EOS_ASSERT( check == block_state->block_signing_key, transaction_exception, "wrong expected key different than recovered key" );
+         break;
+      }
+      bool sign = false;
+      if (context.control.is_producing_block() && !signature) {
+         auto signer = context.control.pending_producer_signer();
+         if (signer) {
+            // Producer is producing this block
+            signature = signer(digest);
+            sign = true;
+         } else {
+            // Non-producer is speculating this block, so skips the signing
+            // TODO: speculating result will be different from producing result
+            signature.emplace();
+         }
+      }
+      EOS_ASSERT(!!signature, transaction_exception, "empty sig action seed");
+      auto& s = *signature;
+      auto sig_size = fc::raw::pack_size(s);
+      if (siglen == 0) return sig_size;
+      if (sig_size <= siglen) {
+         datastream<char*> ds(sig, sig_size);
+         fc::raw::pack(ds, s);
+         if (sign) {
+            block_state->block->block_extensions.emplace_back();
+            char* act_parts = reinterpret_cast<char*>(&context.global_action_sequence);
+            auto &extension = block_state->block->block_extensions.back();
+            extension.first = static_cast<uint16_t>(block_extension_type::bpsig_action_time_seed);
+            extension.second.resize(8 + sig_size);
+            std::copy(act_parts, act_parts + 8, extension.second.data());
+            std::copy((char*)sig, (char*)sig + sig_size, extension.second.data() + 8);
+         }
+         return sig_size;
+      }
+      return 0;
+   }
+private:
+   vector<uint32_t> action_timestamp() {
+      auto current = context.control.pending_block_time().time_since_epoch().count();
+      current -= current % (config::block_interval_us);
+
+      uint32_t* current_halves = reinterpret_cast<uint32_t*>(&current);
+      uint32_t* act_parts = reinterpret_cast<uint32_t*>(&context.global_action_sequence);
+      return vector<uint32_t>{act_parts[0],act_parts[1], current_halves[0], current_halves[1]};
+   }
+};
+REGISTER_INTRINSICS(action_seed_api,
+(bpsig_action_time_seed,  int(int, int)               )
+);
+
 REGISTER_INJECTED_INTRINSICS(call_depth_api,
    (call_depth_assert,  void()               )
 );
@@ -1738,7 +1822,7 @@ REGISTER_INTRINSICS(privileged_api,
    (get_blockchain_parameters_packed, int(int, int)                         )
    (set_blockchain_parameters_packed, void(int,int)                         )
    (set_name_list_packed,             void(int64_t,int64_t,int,int)         )
-   (set_guaranteed_minmum_resources,   void(int64_t,int64_t,int64_t)         )
+   (set_guaranteed_minimum_resources,   void(int64_t,int64_t,int64_t)         )
    (is_privileged,                    int(int64_t)                          )
    (set_privileged,                   void(int64_t, int)                    )
 );
@@ -1860,6 +1944,8 @@ REGISTER_INTRINSICS(console_api,
 REGISTER_INTRINSICS(context_free_transaction_api,
    (read_transaction,       int(int, int)            )
    (transaction_size,       int()                    )
+   (get_transaction_id,     void(int)                )
+   (get_action_sequence,    void(int)                )
    (expiration,             int()                    )
    (tapos_block_prefix,     int()                    )
    (tapos_block_num,        int()                    )

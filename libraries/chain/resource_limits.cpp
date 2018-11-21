@@ -121,7 +121,8 @@ void resource_limits_manager::set_block_parameters(const elastic_limit_parameter
    });
 }
 
-void resource_limits_manager::set_block_parameters_ex(const gmr_parameters& res_parameters) {
+//guaranteed minimum resources  which is abbreviated  gmr
+void resource_limits_manager::set_gmr_parameters(const gmr_parameters& res_parameters) {
    res_parameters.validate();
     const auto& config = _db.get<gmr_config_object>();
    _db.modify(config, [&](gmr_config_object& c){
@@ -143,6 +144,9 @@ void resource_limits_manager::update_account_usage(const flat_set<account_name>&
 void resource_limits_manager::add_transaction_usage(const flat_set<account_name>& accounts, uint64_t cpu_usage, uint64_t net_usage, uint32_t time_slot ) {
    const auto& state = _db.get<resource_limits_state_object>();
    const auto& config = _db.get<resource_limits_config_object>();
+
+
+   //guaranteed minimum resources  which is abbreviated  gmr
    const auto& gmr = _db.get<gmr_config_object>().res_parameters;       // *bos*
 
    for( const auto& a : accounts ) {
