@@ -21,7 +21,8 @@ As BOS continues to develop, developer rewards will be appropriately adjusted to
 ## Links
 1. [Website](https://boscore.io)
 2. [Developer Telegram Group](https://t.me/BOSCoreProject)
-3. [WhitePaper]()
+3. [WhitePaper](https://github.com/boscore/Documentation/blob/master/BOSCoreTechnicalWhitePaper.md)
+4. [白皮书](https://github.com/boscore/Documentation/blob/master/zh-CN/BOSCoreTechnicalWhitePaper.md)
 
 ## Start
 1. Build from code : `bash ./eosio_build.sh -s BOS`
@@ -32,4 +33,5 @@ BOSCore bases on EOSIO, so you can also referer:
 [Getting Started](https://developers.eos.io/eosio-nodeos/docs/overview-1)  
 
 [EOSIO Developer Portal](https://developers.eos.io).
+
 
