@@ -20,7 +20,9 @@ BOS链的代码完全由社区贡献并维护，每个生态参与者都可以�
 
 ## 资源
 1. [官网](https://boscore.io)
-2. [开发者社群](https://t.me/BOSCoreProject)
+2. [开发者社群](https://t.me/BOSCoreDev)
+3. [WhitePaper](https://github.com/boscore/Documentation/blob/master/BOSCoreTechnicalWhitePaper.md)
+4. [白皮书](https://github.com/boscore/Documentation/blob/master/zh-CN/BOSCoreTechnicalWhitePaper.md)
 
 ## 开始
 1. 源码直接编译: `bash ./eosio_build.sh -s BOS`

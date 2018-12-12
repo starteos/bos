@@ -20,7 +20,7 @@ As BOS continues to develop, developer rewards will be appropriately adjusted to
 
 ## Links
 1. [Website](https://boscore.io)
-2. [Developer Telegram Group](https://t.me/BOSCoreProject)
+2. [Developer Telegram Group](https://t.me/BOSCoreDev)
 3. [WhitePaper](https://github.com/boscore/Documentation/blob/master/BOSCoreTechnicalWhitePaper.md)
 4. [白皮书](https://github.com/boscore/Documentation/blob/master/zh-CN/BOSCoreTechnicalWhitePaper.md)
 
