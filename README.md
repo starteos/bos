@@ -1,4 +1,4 @@
-# BOSCore - Born for DApp, be more useable.
+# BOSCore - Born for DApps. Born for Usability.
 
 ## BOSCore Version: v1.0.3
 ### Basic EOSIO Version: v1.4.4
