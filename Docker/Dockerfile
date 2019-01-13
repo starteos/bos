@@ -13,6 +13,7 @@ RUN git clone -b $branch https://github.com/boscore/bos.git --recursive \
     && cmake --build /tmp/build --target install && rm /tmp/build/bin/eosiocpp
 
 
+
 FROM ubuntu:18.04
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y install openssl ca-certificates && rm -rf /var/lib/apt/lists/*
