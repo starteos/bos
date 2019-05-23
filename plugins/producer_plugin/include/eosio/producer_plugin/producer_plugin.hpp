@@ -45,7 +45,15 @@ public:
       chain::block_id_type head_block_id;
       chain::digest_type   integrity_hash;
    };
+////bos feature export table snapshot begin
+   struct table_snapshot_params{
+        std::string          table_name;
+   };
 
+   struct table_snapshot_information {
+        std::string          table_snapshot_name;
+   };
+////bos feature export table snapshot end
    struct snapshot_information {
       chain::block_id_type head_block_id;
       std::string          snapshot_name;
@@ -81,6 +89,7 @@ public:
 
    integrity_hash_information get_integrity_hash() const;
    snapshot_information create_snapshot() const;
+   table_snapshot_information export_table_snapshot(const table_snapshot_params& params) const;////bos feature export table snapshot 
 
    signal<void(const chain::producer_confirmation&)> confirmed_block;
 private:
@@ -94,4 +103,7 @@ FC_REFLECT(eosio::producer_plugin::greylist_params, (accounts));
 FC_REFLECT(eosio::producer_plugin::whitelist_blacklist, (actor_whitelist)(actor_blacklist)(contract_whitelist)(contract_blacklist)(action_blacklist)(key_blacklist) )
 FC_REFLECT(eosio::producer_plugin::integrity_hash_information, (head_block_id)(integrity_hash))
 FC_REFLECT(eosio::producer_plugin::snapshot_information, (head_block_id)(snapshot_name))
-
+////bos feature export table snapshot begin
+FC_REFLECT(eosio::producer_plugin::table_snapshot_information, (table_snapshot_name))
+FC_REFLECT(eosio::producer_plugin::table_snapshot_params, (table_name))
+////bos feature export table snapshot end
