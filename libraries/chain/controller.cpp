@@ -461,14 +461,14 @@ struct controller_impl {
    }
 
 ////bos begin
-   void add_to_table_snapshot( const string& table_name,const string& snapshot_path) const {
+   void add_to_table_snapshot( const std::tuple<name,name,std::string>& table_params,const string& snapshot_path) const {
 
      eosio::table_snapshot_apis::table_snapshot plugin(
          self, fc::microseconds(INT_MAX));
      eosio::table_snapshot_apis::table_snapshot::get_table_rows_params p;
-     p.code = N(eosio);
-     p.scope = "eosio";
-     p.table = name(table_name);//N(voters);
+     p.code = std::get<0>(table_params);//N(eosio);
+     p.scope = std::get<1>(table_params).to_string();//"eosio";
+     p.table = name(std::get<2>(table_params));//N(voters);
      p.json = true;
      p.index_position = "primary";
      eosio::table_snapshot_apis::table_snapshot::get_table_rows_result result =
@@ -2166,9 +2166,9 @@ void controller::write_snapshot( const snapshot_writer_ptr& snapshot ) const {
    return my->add_to_snapshot(snapshot);
 }
 ////bos feature export table snapshot begin
-void controller::write_table_snapshot( const std::string& table_name,const string& snapshot_path ) const {
+void controller::write_table_snapshot( const std::tuple<name,name,std::string>& table_params,const string& snapshot_path ) const {
    EOS_ASSERT( !my->pending, block_validate_exception, "cannot take a consistent snapshot with a pending block" );
-   return my->add_to_table_snapshot(table_name,snapshot_path);
+   return my->add_to_table_snapshot(table_params,snapshot_path);
 }
 ////bos feature export table snapshot end
 

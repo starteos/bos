@@ -45,15 +45,17 @@ public:
       chain::block_id_type head_block_id;
       chain::digest_type   integrity_hash;
    };
-////bos feature export table snapshot begin
-   struct table_snapshot_params{
-        std::string          table_name;
+   ////bos feature export table snapshot begin
+   struct table_snapshot_params {
+      account_name code;
+      account_name scope;
+     std::string table_name;
    };
 
    struct table_snapshot_information {
-        std::string          table_snapshot_name;
+     std::string table_snapshot_name;
    };
-////bos feature export table snapshot end
+   ////bos feature export table snapshot end
    struct snapshot_information {
       chain::block_id_type head_block_id;
       std::string          snapshot_name;
@@ -105,5 +107,5 @@ FC_REFLECT(eosio::producer_plugin::integrity_hash_information, (head_block_id)(i
 FC_REFLECT(eosio::producer_plugin::snapshot_information, (head_block_id)(snapshot_name))
 ////bos feature export table snapshot begin
 FC_REFLECT(eosio::producer_plugin::table_snapshot_information, (table_snapshot_name))
-FC_REFLECT(eosio::producer_plugin::table_snapshot_params, (table_name))
+FC_REFLECT(eosio::producer_plugin::table_snapshot_params, (code)(scope)(table_name))
 ////bos feature export table snapshot end

@@ -979,17 +979,13 @@ producer_plugin::table_snapshot_information producer_plugin::export_table_snapsh
    }
 
    auto head_id = chain.head_block_id();
-   std::string snapshot_path = (my->_snapshots_dir / fc::format_string("${tablename}-table-${id}.json", fc::mutable_variant_object()("tablename", params.table_name)("id", head_id))).generic_string();
+   std::string snapshot_path = (my->_snapshots_dir / fc::format_string("${tablename}-${code}-${scope}-table-${id}.json", 
+   fc::mutable_variant_object()("code", params.code)("scope", params.scope)("tablename", params.table_name)("id", head_id))).generic_string();
 
    EOS_ASSERT( !fc::is_regular_file(snapshot_path), snapshot_exists_exception,
                "table snapshot named ${name} already exists", ("name", snapshot_path));
 
-   // auto snap_out = std::ofstream(snapshot_path, (std::ios::out | std::ios::binary));
-   // auto writer = std::make_shared<ostream_snapshot_writer>(snap_out);
-   chain.write_table_snapshot(params.table_name,snapshot_path);
-   // writer->finalize();
-   // snap_out.flush();
-   // snap_out.close();
+   chain.write_table_snapshot(std::make_tuple(params.code,params.scope,params.table_name),snapshot_path);
 
    return {snapshot_path};
 }
