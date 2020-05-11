@@ -144,7 +144,7 @@ class privileged_api : public context_aware_api {
       privileged_api( apply_context& ctx )
       :context_aware_api(ctx)
       {
-         EOS_ASSERT( context.privileged, unaccessible_api, "${code} does not have permission to call this API", ("code",context.receiver) );
+         EOS_ASSERT( context.is_privileged(), unaccessible_api, "${code} does not have permission to call this API", ("code",context.get_receiver()) );
       }
 
       /**
@@ -1464,8 +1464,9 @@ class context_free_transaction_api : public context_aware_api {
           id = context.trx_context.id;
        }
 
+       /// TODO
        void get_action_sequence(uint64_t& seq){
-           seq = context.global_action_sequence;
+//           seq = context.global_action_sequence;
       }
 
       bool has_contract(account_name name){
@@ -1778,69 +1779,70 @@ public:
            : context_aware_api(ctx) {}
 
    int bpsig_action_time_seed(array_ptr<char> sig, uint32_t siglen) {
-      auto data = action_timestamp();
-      fc::sha256::encoder encoder;
-      encoder.write(reinterpret_cast<const char*>(data.data()), data.size()* sizeof(uint32_t));
-      auto digest = encoder.result();
-      optional<fc::crypto::signature> signature;
-      auto block_state = context.control.pending_block_state();
-      for (auto& extension: block_state->block->block_extensions) {
-         if (extension.first != static_cast<uint16_t>(block_extension_type::bpsig_action_time_seed)) continue;
-         EOS_ASSERT(extension.second.size() > 8, transaction_exception, "invalid producer signature in block extensions");
-         uint64_t* act_parts = reinterpret_cast<uint64_t*>(extension.second.data());
-         if ( act_parts[0] != context.global_action_sequence) continue;
-
-         auto sig_data = extension.second.data() + 8;
-         auto sig_size = extension.second.size() - 8;
-         signature.emplace();
-         datastream<const char*> ds(sig_data, sig_size);
-         fc::raw::unpack(ds, *signature);
-         auto check = fc::crypto::public_key(*signature, digest, false);
-         EOS_ASSERT( check == block_state->block_signing_key, transaction_exception, "wrong expected key different than recovered key" );
-         break;
-      }
-      bool sign = false;
-      if (context.control.is_producing_block() && !signature) {
-         auto signer = context.control.pending_producer_signer();
-         if (signer) {
-            // Producer is producing this block
-            signature = signer(digest);
-            sign = true;
-         } else {
-            // Non-producer is speculating this block, so skips the signing
-            // TODO: speculating result will be different from producing result
-            signature.emplace();
-         }
-      }
-      EOS_ASSERT(!!signature, transaction_exception, "empty sig action seed");
-      auto& s = *signature;
-      auto sig_size = fc::raw::pack_size(s);
-      if (siglen == 0) return sig_size;
-      if (sig_size <= siglen) {
-         datastream<char*> ds(sig, sig_size);
-         fc::raw::pack(ds, s);
-         if (sign) {
-            block_state->block->block_extensions.emplace_back();
-            char* act_parts = reinterpret_cast<char*>(&context.global_action_sequence);
-            auto &extension = block_state->block->block_extensions.back();
-            extension.first = static_cast<uint16_t>(block_extension_type::bpsig_action_time_seed);
-            extension.second.resize(8 + sig_size);
-            std::copy(act_parts, act_parts + 8, extension.second.data());
-            std::copy((char*)sig, (char*)sig + sig_size, extension.second.data() + 8);
-         }
-         return sig_size;
-      }
+//      auto data = action_timestamp();
+//      fc::sha256::encoder encoder;
+//      encoder.write(reinterpret_cast<const char*>(data.data()), data.size()* sizeof(uint32_t));
+//      auto digest = encoder.result();
+//      optional<fc::crypto::signature> signature;
+//      auto block_state = context.control.pending_block_state();
+//      for (auto& extension: block_state->block->block_extensions) {
+//         if (extension.first != static_cast<uint16_t>(block_extension_type::bpsig_action_time_seed)) continue;
+//         EOS_ASSERT(extension.second.size() > 8, transaction_exception, "invalid producer signature in block extensions");
+//         uint64_t* act_parts = reinterpret_cast<uint64_t*>(extension.second.data());
+//         /// TODO
+////         if ( act_parts[0] != context.global_action_sequence) continue;
+//
+//         auto sig_data = extension.second.data() + 8;
+//         auto sig_size = extension.second.size() - 8;
+//         signature.emplace();
+//         datastream<const char*> ds(sig_data, sig_size);
+//         fc::raw::unpack(ds, *signature);
+//         auto check = fc::crypto::public_key(*signature, digest, false);
+//         EOS_ASSERT( check == block_state->block_signing_key, transaction_exception, "wrong expected key different than recovered key" );
+//         break;
+//      }
+//      bool sign = false;
+//      if (context.control.is_producing_block() && !signature) {
+//         auto signer = context.control.pending_producer_signer();
+//         if (signer) {
+//            // Producer is producing this block
+//            signature = signer(digest);
+//            sign = true;
+//         } else {
+//            // Non-producer is speculating this block, so skips the signing
+//            // TODO: speculating result will be different from producing result
+//            signature.emplace();
+//         }
+//      }
+//      EOS_ASSERT(!!signature, transaction_exception, "empty sig action seed");
+//      auto& s = *signature;
+//      auto sig_size = fc::raw::pack_size(s);
+//      if (siglen == 0) return sig_size;
+//      if (sig_size <= siglen) {
+//         datastream<char*> ds(sig, sig_size);
+//         fc::raw::pack(ds, s);
+//         if (sign) {
+//            block_state->block->block_extensions.emplace_back();
+////            char* act_parts = reinterpret_cast<char*>(&context.global_action_sequence);
+//            auto &extension = block_state->block->block_extensions.back();
+//            extension.first = static_cast<uint16_t>(block_extension_type::bpsig_action_time_seed);
+//            extension.second.resize(8 + sig_size);
+////            std::copy(act_parts, act_parts + 8, extension.second.data());
+////            std::copy((char*)sig, (char*)sig + sig_size, extension.second.data() + 8);
+//         }
+//         return sig_size;
+//      }
       return 0;
    }
 private:
-   vector<uint32_t> action_timestamp() {
-      auto current = context.control.pending_block_time().time_since_epoch().count();
-      current -= current % (config::block_interval_us);
-
-      uint32_t* current_halves = reinterpret_cast<uint32_t*>(&current);
-      uint32_t* act_parts = reinterpret_cast<uint32_t*>(&context.global_action_sequence);
-      return vector<uint32_t>{act_parts[0],act_parts[1], current_halves[0], current_halves[1]};
-   }
+//   vector<uint32_t> action_timestamp() {
+//      auto current = context.control.pending_block_time().time_since_epoch().count();
+//      current -= current % (config::block_interval_us);
+//
+//      uint32_t* current_halves = reinterpret_cast<uint32_t*>(&current);
+//      uint32_t* act_parts = reinterpret_cast<uint32_t*>(&context.global_action_sequence);
+//      return vector<uint32_t>{act_parts[0],act_parts[1], current_halves[0], current_halves[1]};
+//   }
 };
 
 REGISTER_INTRINSICS(action_seed_api,

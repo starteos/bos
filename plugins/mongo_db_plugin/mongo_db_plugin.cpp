@@ -1529,8 +1529,8 @@ void mongo_db_plugin::plugin_initialize(const variables_map& options)
             }
          }
 
-         if( options.count( "abi-serializer-max-time-ms") == 0 ) {
-            EOS_ASSERT(false, chain::plugin_config_exception, "--abi-serializer-max-time-ms required as default value not appropriate for parsing full blocks");
+         if( options.count( "abi-serializer-max-time-us") == 0 ) {
+            EOS_ASSERT(false, chain::plugin_config_exception, "--abi-serializer-max-time-us required as default value not appropriate for parsing full blocks");
          }
          my->abi_serializer_max_time = app().get_plugin<chain_plugin>().get_abi_serializer_max_time();
 

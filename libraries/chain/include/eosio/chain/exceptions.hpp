@@ -70,6 +70,10 @@
 
 namespace eosio { namespace chain {
 
+        enum class system_error_code : uint64_t {
+            generic_system_error = 10000000000000000000ULL,
+            contract_restricted_error_code, //< contract used an error code reserved for system usage
+        };
    FC_DECLARE_EXCEPTION( chain_exception,
                          3000000, "blockchain exception" )
    /**
