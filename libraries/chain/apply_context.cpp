@@ -329,7 +329,8 @@ void apply_context::schedule_deferred_transaction( const uint128_t& sender_id, a
    bool enforce_actor_whitelist_blacklist = trx_context.enforce_whiteblacklist && control.is_producing_block()
                                              && !control.sender_avoids_whitelist_blacklist_enforcement( receiver );
    trx_context.validate_referenced_accounts( trx, enforce_actor_whitelist_blacklist );
-
+   trx.expiration = control.pending_block_time() + fc::microseconds(999'999); // Rounds up to nearest second (makes expiration check unnecessary)
+   trx.set_reference_block(control.head_block_id()); // No TaPoS check necessary
    // Charge ahead of time for the additional net usage needed to retire the deferred transaction
    // whether that be by successfully executing, soft failure, hard failure, or expiration.
    const auto& cfg = control.get_global_properties().configuration;
