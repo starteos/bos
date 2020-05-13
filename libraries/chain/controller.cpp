@@ -1761,11 +1761,17 @@ struct controller_impl {
          auto current_lib_num = std::max(std::max(head->bft_irreversible_blocknum, head->dpos_irreversible_blocknum), snapshot_head_block);
          fork_db.set_bft_irreversible(*pending_pbft_lib);
          if (!replaying) {
-             // emit lib signal to a separate channel, plugins should connect to this channel in order to process libs asap.
+             // emit lib signals to a separate channel, plugins should connect to this channel in order to process libs asap.
+             auto libs_to_be_emitted = vector<block_state_ptr>{};
              auto b = fork_db.get_block(*pending_pbft_lib);
              while (b && b->block_num > current_lib_num) {
-                 emit( self.new_irreversible_block, b );
+                 libs_to_be_emitted.emplace_back(b);
                  b = fork_db.get_block(b->prev());
+             }
+             while (!libs_to_be_emitted.empty()) {
+                 // emit all libs in ascending order.
+                 emit( self.new_irreversible_block, libs_to_be_emitted.back() );
+                 libs_to_be_emitted.pop_back();
              }
          }
 
