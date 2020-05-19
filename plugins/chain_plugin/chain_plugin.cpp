@@ -263,7 +263,8 @@ void chain_plugin::set_program_options(options_description& cli, options_descrip
 		   EOS_ASSERT(false, plugin_exception, "");
 		 }
 #endif
-	   }), "Override default WASM runtime")         ("abi-serializer-max-time-us", bpo::value<uint32_t>()->default_value(config::default_abi_serializer_max_time_us),
+         }), "Override default WASM runtime")
+         ("abi-serializer-max-time-ms", bpo::value<uint32_t>()->default_value(config::default_abi_serializer_max_time_us / 1000),
           "Override default maximum ABI serialization time allowed in ms")
          ("chain-state-db-size-mb", bpo::value<uint64_t>()->default_value(config::default_state_size / (1024  * 1024)), "Maximum size (in MiB) of the chain state database")
          ("chain-state-db-guard-size-mb", bpo::value<uint64_t>()->default_value(config::default_state_guard_size / (1024  * 1024)), "Safely shut down node when free space remaining in the chain state database drops below this size (in MiB).")
@@ -520,8 +521,8 @@ void chain_plugin::plugin_initialize(const variables_map& options) {
       if( options.count( "wasm-runtime" ))
          my->wasm_runtime = options.at( "wasm-runtime" ).as<vm_type>();
 
-      if(options.count("abi-serializer-max-time-us"))
-         my->abi_serializer_max_time_us = fc::microseconds(options.at("abi-serializer-max-time-us").as<uint32_t>() * 1000);
+      if(options.count("abi-serializer-max-time-ms"))
+         my->abi_serializer_max_time_us = fc::microseconds(options.at("abi-serializer-max-time-ms").as<uint32_t>() * 1000);
 
       my->chain_config->blocks_dir = my->blocks_dir;
       my->chain_config->state_dir = app().data_dir() / config::default_state_dir_name;
