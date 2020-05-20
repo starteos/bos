@@ -289,12 +289,28 @@ datastream<ST>& operator<<(datastream<ST>& ds, const history_serial_wrapper<eosi
 }
 
 template <typename ST>
+datastream<ST>& operator<<(datastream<ST>& ds, const history_serial_wrapper<eosio::chain::producer_key>& obj) {
+    fc::raw::pack(ds, as_type<uint64_t>(obj.obj.producer_name.to_uint64_t()));
+    fc::raw::pack(ds, as_type<eosio::chain::public_key_type>(obj.obj.block_signing_key));
+    return ds;
+}
+
+template <typename ST>
+datastream<ST>& operator<<(datastream<ST>&                                                            ds,
+                           const history_serial_wrapper<eosio::chain::shared_producer_schedule_type>& obj) {
+    fc::raw::pack(ds, as_type<uint32_t>(obj.obj.version));
+    history_serialize_container(ds, obj.db,
+                                as_type<eosio::chain::shared_vector<eosio::chain::producer_key>>(obj.obj.producers));
+    return ds;
+}
+
+template <typename ST>
 datastream<ST>& operator<<(datastream<ST>&                                                     ds,
                            const history_serial_wrapper<eosio::chain::global_property_object>& obj) {
    fc::raw::pack(ds, fc::unsigned_int(1));
    fc::raw::pack(ds, as_type<optional<eosio::chain::block_num_type>>(obj.obj.proposed_schedule_block_num));
-//   fc::raw::pack(ds, make_history_serial_wrapper(
-//                         obj.db, as_type<eosio::chain::shared_producer_schedule_type>(obj.obj.proposed_schedule)));
+   fc::raw::pack(ds, make_history_serial_wrapper(
+                         obj.db, as_type<eosio::chain::shared_producer_schedule_type>(obj.obj.proposed_schedule)));
    fc::raw::pack(ds, make_history_serial_wrapper(obj.db, as_type<eosio::chain::chain_config>(obj.obj.configuration)));
 
    return ds;
@@ -327,12 +343,6 @@ datastream<ST>& operator<<(datastream<ST>& ds, const history_serial_wrapper<eosi
    return ds;
 }
 
-//template <typename ST>
-//datastream<ST>& operator<<(datastream<ST>& ds, const history_serial_wrapper<eosio::chain::shared_key_weight>& obj) {
-//   fc::raw::pack(ds, as_type<eosio::chain::shared_public_key>(obj.obj.key));
-//   fc::raw::pack(ds, as_type<uint16_t>(obj.obj.weight));
-//   return ds;
-//}
 
 template <typename ST>
 datastream<ST>& operator<<(datastream<ST>& ds, const history_serial_wrapper<eosio::chain::permission_level>& obj) {

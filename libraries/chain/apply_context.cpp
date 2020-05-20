@@ -56,6 +56,8 @@ void apply_context::exec_one()
    action_receipt r;
    r.receiver         = receiver;
    r.act_digest       = digest_type::hash(*act);
+   const auto& p = control.get_dynamic_global_properties();
+   global_action_sequence = p.global_action_sequence + 1;
 
    const auto& cfg = control.get_global_properties().configuration;
    const account_metadata_object* receiver_account = nullptr;
@@ -91,7 +93,7 @@ void apply_context::exec_one()
    } catch( fc::exception& e ) {
        action_trace& trace = trx_context.get_action_trace( action_ordinal );
        /// TODO
-//       trace.error_code = controller::convert_exception_to_error_code( e );
+       trace.error_code = controller::convert_exception_to_error_code( e );
        trace.except = e;
        finalize_trace( trace, start );
        throw;

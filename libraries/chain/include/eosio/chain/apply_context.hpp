@@ -563,6 +563,7 @@ class apply_context {
       controller&                   control;
       chainbase::database&          db;  ///< database where state is stored
       transaction_context&          trx_context; ///< transaction context in which the action is running
+      uint64_t                      global_action_sequence = 0;
 
    private:
       const action*                 act = nullptr; ///< action being applied

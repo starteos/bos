@@ -168,11 +168,6 @@ action_seq_type notify_plugin_impl::on_action_trace(const action_trace &act, con
   }
   act_s++;
 
-  /// TODO
-//  for (const auto &iline : act.inline_traces)
-//  {
-//    act_s = on_action_trace(iline, tx_id, act_s);
-//  }
   return act_s;
 }
 

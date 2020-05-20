@@ -2042,21 +2042,19 @@ read_only::get_account_results read_only::get_account( const get_account_params&
       abi_def abi_personal;
       if( abi_serializer::to_abi(personal_account.abi, abi_personal) ) {
          abi_serializer abis_personal( abi_personal, abi_serializer_max_time );
-         /// TODO
-//         const auto* t_id = d.find<chain::table_id_object, chain::by_code_scope_table>(boost::make_tuple( N(personal.bos), params.account_name.to_uint64_t(), N(personaldata) ));
-//            const auto *t_id = nullptr_t;
-//            if (t_id != nullptr) {
-//            const auto &idx = d.get_index<key_value_index, by_scope_primary>();
-//
-//            name key_name{"homepage"};
-//            auto it = idx.find(boost::make_tuple( t_id->id, key_name.to_uint64_t()));
-//            if ( it != idx.end() ) {
-//               vector<char> data;
-//               copy_inline_row(*it, data);
-//               variant raw_data= abis_personal.binary_to_variant( "personal", data, abi_serializer_max_time, shorten_abi_errors );
-//               result.homepage=raw_data["value"].as_string();
-//            }
-//         }
+         const auto* t_id = d.find<chain::table_id_object, chain::by_code_scope_table>(boost::make_tuple( N(personal.bos), params.account_name, N(personaldata) ));
+            if (t_id != nullptr) {
+            const auto &idx = d.get_index<key_value_index, by_scope_primary>();
+
+            name key_name{"homepage"};
+            auto it = idx.find(boost::make_tuple( t_id->id, key_name.to_uint64_t()));
+            if ( it != idx.end() ) {
+               vector<char> data;
+               copy_inline_row(*it, data);
+               variant raw_data= abis_personal.binary_to_variant( "personal", data, abi_serializer_max_time, shorten_abi_errors );
+               result.homepage=raw_data["value"].as_string();
+            }
+         }
       }
    }
    return result;
