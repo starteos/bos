@@ -213,7 +213,8 @@ struct controller_impl {
    {
 
 #define SET_APP_HANDLER( receiver, contract, action) \
-   set_apply_handler( #receiver, #contract, #action, &BOOST_PP_CAT(apply_, BOOST_PP_CAT(contract, BOOST_PP_CAT(_,action) ) ) )
+   set_apply_handler( account_name(#receiver), account_name(#contract), action_name(#action), \
+                      &BOOST_PP_CAT(apply_, BOOST_PP_CAT(contract, BOOST_PP_CAT(_,action) ) ) )
 
    SET_APP_HANDLER( eosio, eosio, newaccount );
    SET_APP_HANDLER( eosio, eosio, setcode );
@@ -1104,8 +1105,7 @@ struct controller_impl {
       try {
          trx_context.init_for_implicit_trx();
          trx_context.published = gtrx.published;
-         trx_context.trace->action_traces.emplace_back();
-         trx_context.dispatch_action( trx_context.trace->action_traces.back(), etrx.actions.back(), gtrx.sender );
+         trx_context.execute_action( trx_context.schedule_action( etrx.actions.back(), gtrx.sender, false, 0, 0 ), 0 );
          trx_context.finalize(); // Automatically rounds up network and CPU usage in trace and bills payers if successful
 
          auto restore = make_block_restore_point();
@@ -2865,5 +2865,15 @@ vm::wasm_allocator& controller::get_wasm_allocator() {
   return my->wasm_alloc;
 }
 #endif
+
+fc::optional<uint64_t> controller::convert_exception_to_error_code( const fc::exception& e ) {
+    const chain_exception* e_ptr = dynamic_cast<const chain_exception*>( &e );
+
+    if( e_ptr == nullptr ) return {};
+
+    if( !e_ptr->error_code ) return static_cast<uint64_t>(system_error_code::generic_system_error);
+
+    return e_ptr->error_code;
+}
 
 } } /// eosio::chain
