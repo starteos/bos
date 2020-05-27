@@ -1608,7 +1608,7 @@ void mongo_db_plugin::plugin_initialize(const variables_map& options)
             my->accepted_block( bs );
          } ));
          my->irreversible_block_connection.emplace(
-               chain.irreversible_block.connect( [&]( const chain::block_state_ptr& bs ) {
+               chain.new_irreversible_block.connect( [&]( const chain::block_state_ptr& bs ) {
                   my->applied_irreversible_block( bs );
                } ));
          my->accepted_transaction_connection.emplace(

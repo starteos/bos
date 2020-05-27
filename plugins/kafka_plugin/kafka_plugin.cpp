@@ -126,7 +126,7 @@ void kafka_plugin::plugin_initialize(const variables_map& options) {
         }
         handle([=] { kafka_->push_block(b, false); }, "push block");
     });
-    irreversible_block_conn_ = chain.irreversible_block.connect([=](const chain::block_state_ptr& b) {
+    irreversible_block_conn_ = chain.new_irreversible_block.connect([=](const chain::block_state_ptr& b) {
         if (not start_sync_) {
             if (b->block_num >= start_block_num) start_sync_ = true;
             else return;
