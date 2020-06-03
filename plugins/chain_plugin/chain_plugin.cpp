@@ -2087,7 +2087,7 @@ read_only::get_act_token_result read_only::get_act_token( const name& account_na
    }
    // REX 
    const auto& d = db.db();
-   const auto& code_account = db.db().get<account_object,by_name>( config::system_account_name );
+   const auto& code_account = db.db().get<account_object2,by_name>( config::system_account_name );
    abi_def abi;
    if( abi_serializer::to_abi(code_account.abi, abi) ) {
       abi_serializer abis( abi, abi_serializer_max_time );

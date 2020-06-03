@@ -127,7 +127,7 @@ datastream<ST>& operator<<(datastream<ST>& ds, const history_serial_wrapper<std:
 }
 
 template <typename ST>
-datastream<ST>& operator<<(datastream<ST>& ds, const history_serial_wrapper<eosio::chain::account_object>& obj) {
+datastream<ST>& operator<<(datastream<ST>& ds, const history_serial_wrapper<eosio::chain::account_object2>& obj) {
    fc::raw::pack(ds, fc::unsigned_int(0));
    fc::raw::pack(ds, as_type<uint64_t>(obj.obj.name.to_uint64_t()));
    fc::raw::pack(ds, as_type<eosio::chain::block_timestamp_type>(obj.obj.creation_date));
@@ -576,6 +576,8 @@ datastream<ST>& operator<<(datastream<ST>& ds, const history_context_wrapper<boo
          e = "Y";
    }
    fc::raw::pack(ds, as_type<fc::optional<std::string>>(e));
+   fc::raw::pack(ds, as_type<fc::optional<uint64_t>>(debug_mode ? obj.obj.error_code
+                                                                : cap_error_code(obj.obj.error_code)));
 
    return ds;
 }
