@@ -329,8 +329,8 @@ void notify_plugin::plugin_initialize(const variables_map &options)
         }));
 
     my->applied_tx_conn.emplace(chain.applied_transaction.connect(
-        [&](const transaction_trace_ptr &tx) {
-          my->on_applied_tx(tx);
+        [&](std::tuple<const chain::transaction_trace_ptr&, const chain::signed_transaction&> t) {
+          my->on_applied_tx(std::get<0>(t));
         }));
   }
   FC_LOG_AND_RETHROW()

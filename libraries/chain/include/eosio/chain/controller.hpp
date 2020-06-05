@@ -311,7 +311,7 @@ namespace eosio { namespace chain {
          signal<void(const block_state_ptr&)>          irreversible_block;
          signal<void(const block_state_ptr&)>          new_irreversible_block;
          signal<void(const transaction_metadata_ptr&)> accepted_transaction;
-         signal<void(const transaction_trace_ptr&)>    applied_transaction;
+         signal<void(std::tuple<const transaction_trace_ptr&, const signed_transaction&>)> applied_transaction;
          signal<void(const header_confirmation&)>      accepted_confirmation;
          signal<void(const int&)>                      bad_alloc;
 
