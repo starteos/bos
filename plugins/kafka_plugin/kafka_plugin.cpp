@@ -133,9 +133,9 @@ void kafka_plugin::plugin_initialize(const variables_map& options) {
         }
         handle([=] { kafka_->push_block(b, true); }, "push irreversible block");
     });
-    transaction_conn_ = chain.applied_transaction.connect([=](const chain::transaction_trace_ptr& t) {
+    transaction_conn_ = chain.applied_transaction.connect([=]( std::tuple<const chain::transaction_trace_ptr&, const chain::signed_transaction&> t) {
         if (not start_sync_) return;
-        handle([=] { kafka_->push_transaction_trace(t); }, "push transaction");
+        handle([=] { kafka_->push_transaction_trace(std::get<0>(t)); }, "push transaction");
     });
 }
 

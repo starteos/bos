@@ -147,7 +147,7 @@ struct state_history_plugin_impl : std::enable_shared_from_this<state_history_pl
    void get_block(uint32_t block_num, fc::optional<bytes>& result) {
       chain::signed_block_ptr p;
       try {
-         p = chain_plug->chain().fetch_block_by_number(block_num);
+         p = chain_plug->chain().fetch_block_by_number_state_history(block_num);
       } catch (...) {
          return;
       }
@@ -161,7 +161,7 @@ struct state_history_plugin_impl : std::enable_shared_from_this<state_history_pl
       if (chain_state_log && block_num >= chain_state_log->begin_block() && block_num < chain_state_log->end_block())
          return chain_state_log->get_block_id(block_num);
       try {
-         auto block = chain_plug->chain().fetch_block_by_number(block_num);
+         auto block = chain_plug->chain().fetch_block_by_number_state_history(block_num);
          if (block)
             return block->id();
       } catch (...) {
@@ -427,14 +427,14 @@ struct state_history_plugin_impl : std::enable_shared_from_this<state_history_pl
              auth.permission == eosio::chain::config::active_name;
    }
 
-   void on_applied_transaction(const transaction_trace_ptr& p) {
+   void on_applied_transaction(const transaction_trace_ptr& p, const signed_transaction& t) {
       if (p->receipt && trace_log) {
          if (is_onblock(p))
-            onblock_trace = p;
+            onblock_trace.emplace(p, t);
          else if (p->failed_dtrx_trace)
-            cached_traces[p->failed_dtrx_trace->id] = p;
+            cached_traces[p->failed_dtrx_trace->id] = augmented_transaction_trace{p, t};
          else
-            cached_traces[p->id] = p;
+            cached_traces[p->id] = augmented_transaction_trace{p, t};
       }
    }
 
@@ -614,7 +614,9 @@ void state_history_plugin::plugin_initialize(const variables_map& options) {
       EOS_ASSERT(my->chain_plug, chain::missing_chain_plugin_exception, "");
       auto& chain = my->chain_plug->chain();
       my->applied_transaction_connection.emplace(
-          chain.applied_transaction.connect([&](const transaction_trace_ptr& p) { my->on_applied_transaction(p); }));
+          chain.applied_transaction.connect([&](std::tuple<const transaction_trace_ptr&, const signed_transaction&> t) {
+             my->on_applied_transaction(std::get<0>(t), std::get<1>(t));
+          }));
       my->accepted_block_connection.emplace(
           chain.accepted_block.connect([&](const block_state_ptr& p) { my->on_accepted_block(p); }));
 
