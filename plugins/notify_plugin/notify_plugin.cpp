@@ -323,7 +323,7 @@ void notify_plugin::plugin_initialize(const variables_map &options)
           my->on_accepted_block(b_state);
         }));
 
-    my->irreversible_block_conn.emplace(chain.irreversible_block.connect(
+    my->irreversible_block_conn.emplace(chain.new_irreversible_block.connect(
         [&](const block_state_ptr &bs) {
           my->on_irreversible_block(bs);
         }));
