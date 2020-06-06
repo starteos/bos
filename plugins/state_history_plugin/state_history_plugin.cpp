@@ -147,7 +147,7 @@ struct state_history_plugin_impl : std::enable_shared_from_this<state_history_pl
    void get_block(uint32_t block_num, fc::optional<bytes>& result) {
       chain::signed_block_ptr p;
       try {
-         p = chain_plug->chain().fetch_block_by_number(block_num);
+         p = chain_plug->chain().fetch_block_by_number_state_history(block_num);
       } catch (...) {
          return;
       }
@@ -161,7 +161,7 @@ struct state_history_plugin_impl : std::enable_shared_from_this<state_history_pl
       if (chain_state_log && block_num >= chain_state_log->begin_block() && block_num < chain_state_log->end_block())
          return chain_state_log->get_block_id(block_num);
       try {
-         auto block = chain_plug->chain().fetch_block_by_number(block_num);
+         auto block = chain_plug->chain().fetch_block_by_number_state_history(block_num);
          if (block)
             return block->id();
       } catch (...) {
