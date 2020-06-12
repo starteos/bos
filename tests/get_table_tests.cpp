@@ -194,7 +194,7 @@ BOOST_FIXTURE_TEST_CASE( get_table_test, TESTER ) try {
    produce_blocks(1);
 
    // get table: normal case
-   eosio::chain_apis::read_only plugin(*(this->control), {} fc::microseconds(INT_MAX), *(this->pbft_ctrl));
+   eosio::chain_apis::read_only plugin(*(this->control), {}, fc::microseconds(INT_MAX), *(this->pbft_ctrl));
    eosio::chain_apis::read_only::get_table_rows_params p;
    p.code = N(eosio.token);
    p.scope = "inita";
