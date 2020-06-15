@@ -24,7 +24,6 @@ The above will build off the most recent commit to the master branch by default.
 
 ```bash
 docker build -t boscore/bos:v3.0.9 --build-arg branch=v3.0.9 .
-
 ```
 
 By default, the symbol in eosio.system is set to SYS. You can override this using the symbol argument while building the docker image.
