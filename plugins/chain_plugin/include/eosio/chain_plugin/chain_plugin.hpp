@@ -19,6 +19,8 @@
 #include <boost/container/flat_set.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 
+#include <eosio/chain_plugin/account_query_db.hpp>
+
 #include <fc/static_variant.hpp>
 #include <eosio/chain/pbft.hpp>
 
@@ -72,6 +74,7 @@ double convert_to_type(const string& str, const string& desc);
 
 class read_only {
    const controller& db;
+   const fc::optional<account_query_db>& aqdb;
    const fc::microseconds abi_serializer_max_time;
    bool  shorten_abi_errors = true;
    const chain::pbft_controller& pbft_ctrl;
@@ -79,8 +82,8 @@ class read_only {
 public:
    static const string KEYi64;
 
-   read_only(const controller& db, const fc::microseconds& abi_serializer_max_time, const chain::pbft_controller& pbft_ctrl)
-      : db(db), abi_serializer_max_time(abi_serializer_max_time), pbft_ctrl(pbft_ctrl) {}
+   read_only(const controller& db, const fc::optional<account_query_db>& aqdb, const fc::microseconds& abi_serializer_max_time, const chain::pbft_controller& pbft_ctrl)
+      : db(db), aqdb(aqdb), abi_serializer_max_time(abi_serializer_max_time), pbft_ctrl(pbft_ctrl) {}
 
    void validate() const {}
 
@@ -571,6 +574,10 @@ public:
       return result;
    }
 
+   using get_accounts_by_authorizers_result = account_query_db::get_accounts_by_authorizers_result;
+   using get_accounts_by_authorizers_params = account_query_db::get_accounts_by_authorizers_params;
+   get_accounts_by_authorizers_result get_accounts_by_authorizers( const get_accounts_by_authorizers_params& args) const;
+
    chain::symbol extract_core_symbol()const;
 
    friend struct resolver_factory<read_only>;
@@ -675,7 +682,7 @@ public:
    void plugin_startup();
    void plugin_shutdown();
 
-   chain_apis::read_only get_read_only_api() const { return chain_apis::read_only(chain(), get_abi_serializer_max_time(), pbft_ctrl()); }
+   chain_apis::read_only get_read_only_api() const;
    chain_apis::read_write get_read_write_api() { return chain_apis::read_write(chain(), get_abi_serializer_max_time()); }
 
    void accept_block( const chain::signed_block_ptr& block );
@@ -715,6 +722,8 @@ public:
    void handle_guard_exception(const chain::guard_exception& e) const;
 
    static void handle_db_exhaustion();
+
+   bool account_queries_enabled() const;
 private:
    void log_guard_exception(const chain::guard_exception& e) const;
 
@@ -777,3 +786,4 @@ FC_REFLECT( eosio::chain_apis::read_only::abi_bin_to_json_params, (code)(action)
 FC_REFLECT( eosio::chain_apis::read_only::abi_bin_to_json_result, (args) )
 FC_REFLECT( eosio::chain_apis::read_only::get_required_keys_params, (transaction)(available_keys) )
 FC_REFLECT( eosio::chain_apis::read_only::get_required_keys_result, (required_keys) )
+

@@ -1,6 +1,6 @@
 # BOSCore - 区块链自由港，构建可信商业生态。
 
-## BOSCore Version: v3.0.8
+## BOSCore Version: v3.0.9
 ### Basic EOSIO Version: v2.0 (support REX & EOSVM, llvm v90)
 
 # 背景

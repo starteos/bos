@@ -1,6 +1,6 @@
 # BOSCore - Blockchain financial center building a trusted business ecosystem.
 
-## BOSCore Version: v3.0.8
+## BOSCore Version: v3.0.9
 ### Basic EOSIO Version: v2.0 (support REX & EOSVM, llvm v90)
 
 # Background
