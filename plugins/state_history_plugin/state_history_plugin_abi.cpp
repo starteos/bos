@@ -340,6 +340,13 @@ extern const char* const state_history_plugin_abi = R"({
             ]
         },
         {
+            "name": "global_property_v1", "fields": [
+                { "type": "uint32?", "name": "proposed_schedule_block_num" },
+                { "type": "producer_schedule", "name": "proposed_schedule" },
+                { "type": "chain_config", "name": "configuration" }
+            ]
+        },
+        {
             "name": "generated_transaction_v0", "fields": [
                 { "type": "name", "name": "sender" },
                 { "type": "uint128", "name": "sender_id" },
