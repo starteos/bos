@@ -1,7 +1,7 @@
 #include <eosio/chain/controller.hpp>
 #include <eosio/chain/transaction_context.hpp>
 
-#include <eosio/chain/block_log.hpp>
+//#include <eosio/chain/block_log.hpp>
 #include <eosio/chain/fork_database.hpp>
 #include <eosio/chain/exceptions.hpp>
 
@@ -2245,6 +2245,7 @@ const chainbase::database& controller::db()const { return my->db; }
 chainbase::database& controller::mutable_db()const { return my->db; }
 
 const fork_database& controller::fork_db()const { return my->fork_db; }
+const block_log& controller::block_log()const { return my->blog; }
 
 std::map<chain::public_key_type, signature_provider_type> controller:: my_signature_providers()const{
    return my->conf.my_signature_providers;

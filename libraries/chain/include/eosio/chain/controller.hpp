@@ -1,4 +1,5 @@
 #pragma once
+#include <eosio/chain/block_log.hpp>
 #include <eosio/chain/block_state.hpp>
 #include <eosio/chain/trace.hpp>
 #include <eosio/chain/genesis_state.hpp>
@@ -181,6 +182,7 @@ namespace eosio { namespace chain {
 
 
          const fork_database& fork_db()const;
+	 const block_log& block_log()const;
 
          std::map<chain::public_key_type, signature_provider_type> my_signature_providers()const;
          void set_my_signature_providers(std::map<chain::public_key_type, signature_provider_type> msp);
