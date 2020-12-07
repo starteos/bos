@@ -199,3 +199,4 @@ The launcher app creates a separate date and configuration directory for each no
 | stdout.txt    | The cout output from eosd.
 
 A file called "last_run.json" contains hints for a later instance of the launcher to be able to kill local and remote nodes when run with -k 15.
+
